@@ -53,16 +53,17 @@ jobs:
 
       - name: Regenerate snapshot
         run: |
-          script/regenerate.sh openccu-data
+          make regenerate OPENCCU_DATA=openccu-data
           rm -rf openccu-data
-          go test ./...
 
       - name: Open regeneration PR
         run: |
           set -euo pipefail
           VERSION="$(sed -n 's/^const SnapshotVersion = "\(.*\)"$/\1/p' openccudata.go)"
           BRANCH="regen/openccu-data-${VERSION}"
-          if git diff --quiet; then
+          # git status --porcelain also catches untracked files (a new
+          # profile archive) — git diff would miss them.
+          if [ -z "$(git status --porcelain)" ]; then
             echo "snapshot unchanged — nothing to do"
             exit 0
           fi

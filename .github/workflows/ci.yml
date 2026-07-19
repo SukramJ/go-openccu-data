@@ -1,21 +1,64 @@
+# GitHub Actions CI for go-openccu-data.
+#
+# Two jobs: lint (gofumpt + go vet), test (matrix across the OS triplet
+# consumers build on — race detector on, so CGo enabled for this single
+# step). Concurrency cancels stale runs on the same ref so a
+# fast-pushing developer isn't billed for outdated commits.
 name: ci
-# yamllint disable-line rule:truthy
+
 on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CGO_ENABLED: "0"
+
 jobs:
-  test:
+  lint:
+    name: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.0
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-      - run: gofmt -l . && test -z "$(gofmt -l .)"
-      - run: go vet ./...
-      - run: go test ./...
+          cache: true
+      - name: go vet
+        run: go vet ./...
+      - name: gofumpt
+        run: |
+          go install mvdan.cc/gofumpt@latest
+          diff=$(gofumpt -l .)
+          if [ -n "$diff" ]; then
+            echo "::error::gofumpt would rewrite:"
+            echo "$diff"
+            exit 1
+          fi
+
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v7.0.0
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: go test
+        env:
+          # Race detector requires CGo; re-enable just for this step.
+          CGO_ENABLED: "1"
+        run: go test -race -count=1 -timeout=120s ./...

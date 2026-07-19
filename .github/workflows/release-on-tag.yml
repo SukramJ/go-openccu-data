@@ -1,0 +1,56 @@
+name: "Release: Create from Tag"
+# Creates the GitHub Release for a pushed module tag. The module is
+# consumed via the Go proxy, so there are no build artifacts — the
+# release carries generated notes plus the embedded openccu-data
+# snapshot version.
+# yamllint disable-line rule:truthy
+on:
+  push:
+    tags:
+      - '**'
+
+permissions:
+  contents: write
+
+# One concurrent release per tag — re-pushing the same tag overrides
+# the previous in-flight run instead of racing it.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  create_release:
+    if: github.repository_owner == 'SukramJ'
+    name: Create GitHub Release (${{ github.ref_name }})
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Verify tagged snapshot
+        run: go test ./...
+
+      - name: Read embedded snapshot version
+        run: |
+          SNAPSHOT="$(sed -n 's/^const SnapshotVersion = "\(.*\)"$/\1/p' openccudata.go)"
+          [ -n "$SNAPSHOT" ] || { echo "SnapshotVersion not found" >&2; exit 1; }
+          echo "SNAPSHOT=${SNAPSHOT}" >> "$GITHUB_ENV"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b  # v3
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body: |
+            Embedded data snapshot: openccu-data `${{ env.SNAPSHOT }}`.
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
