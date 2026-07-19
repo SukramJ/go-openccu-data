@@ -1,0 +1,79 @@
+name: "Regenerate: on openccu-data release"
+# Fired by the openccu-data release workflow via repository_dispatch
+# (event_type: data-release, client_payload.tag: the released tag).
+# Checks out openccu-data at that tag, regenerates the data snapshot,
+# stamps SnapshotVersion, and opens a PR. Manual fallback:
+# workflow_dispatch with the tag as input.
+# yamllint disable-line rule:truthy
+on:
+  repository_dispatch:
+    types: [data-release]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "openccu-data release tag (e.g. 2026.7.0)"
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  regenerate:
+    if: github.repository_owner == 'SukramJ'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve data tag
+        run: |
+          TAG="${{ github.event.client_payload.tag || github.event.inputs.tag }}"
+          if [ -z "$TAG" ]; then
+            echo "No openccu-data tag in payload/input" >&2
+            exit 1
+          fi
+          echo "DATA_TAG=${TAG}" >> "$GITHUB_ENV"
+
+      # Checked out with the PAT so the regen branch is pushed under a
+      # real identity — a PR created via GITHUB_TOKEN would not trigger
+      # the CI workflow this repo's checks rely on.
+      - name: Checkout go-openccu-data
+        uses: actions/checkout@v7.0.0
+        with:
+          token: ${{ secrets.RELEASE_PAT }}
+
+      - name: Checkout openccu-data at the released tag
+        uses: actions/checkout@v7.0.0
+        with:
+          repository: SukramJ/openccu-data
+          ref: ${{ env.DATA_TAG }}
+          path: openccu-data
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Regenerate snapshot
+        run: |
+          script/regenerate.sh openccu-data
+          rm -rf openccu-data
+          go test ./...
+
+      - name: Open regeneration PR
+        run: |
+          set -euo pipefail
+          VERSION="$(sed -n 's/^const SnapshotVersion = "\(.*\)"$/\1/p' openccudata.go)"
+          BRANCH="regen/openccu-data-${VERSION}"
+          if git diff --quiet; then
+            echo "snapshot unchanged — nothing to do"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add -A
+          git commit -s -m "chore(data): regenerate snapshot from openccu-data ${VERSION}"
+          git push -u origin "$BRANCH"
+          gh pr create --base main \
+            --title "chore(data): regenerate snapshot from openccu-data ${VERSION}" \
+            --body "Automated regeneration from the openccu-data \`${DATA_TAG}\` release. Tag a new module version after merge."
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
