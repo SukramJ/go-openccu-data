@@ -27,7 +27,7 @@ import (
 
 // SnapshotVersion is the openccu-data release this data snapshot was
 // generated from. Stamped by script/regenerate.sh.
-const SnapshotVersion = "2026.7.1"
+const SnapshotVersion = "2026.7.2"
 
 // files carries the embedded data snapshot. Exposed through ReadFile
 // so the path layout stays an implementation detail.
