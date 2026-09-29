@@ -16,7 +16,7 @@ There are no external dependencies; the module is a single package at the repo r
 
 ## What this repository is
 
-A **data artifact, not a lookup framework** — this constraint is deliberate and should be preserved. It ships the [openccu-data](https://github.com/SukramJ/openccu-data) metadata extracts (translations, easymodes, MASTER-paramset profiles, curated overlays, device semantics) as an embedded Go module. Consumers (primarily [openccu-loom](https://github.com/SukramJ/openccu-loom), `internal/ccudata`) decode the archives themselves and layer lookup semantics on top. Resist adding parsing/lookup logic here; the only typed accessor is `DoorbellModels()` for the small curated `device_semantics.json`.
+A **data artifact, not a lookup framework** — this constraint is deliberate and should be preserved. It ships the [openccu-data](https://github.com/SukramJ/openccu-data) metadata extracts (translations, easymodes, MASTER-paramset profiles, curated overlays, device semantics, the WebUI device images under `device_images/250/`) as an embedded Go module. Consumers (primarily [openccu-loom](https://github.com/SukramJ/openccu-loom), `internal/ccudata`) decode the archives themselves and layer lookup semantics on top. Resist adding parsing/lookup logic here; the only typed accessor is `DoorbellModels()` for the small curated `device_semantics.json`.
 
 ## Architecture
 

@@ -3,7 +3,7 @@
 [openccu-data](https://github.com/SukramJ/openccu-data) as a versioned
 Go artifact: the OCCU/OpenCCU metadata extracts (translations,
 easymodes, MASTER-paramset profiles, curated overlays, curated device
-semantics) embedded into a Go module with thin typed accessors.
+semantics, CCU WebUI device images under `device_images/250/`) embedded into a Go module with thin typed accessors.
 
 The snapshot under `data/` is regenerated automatically on every
 openccu-data release (`repository_dispatch` → regenerate workflow →

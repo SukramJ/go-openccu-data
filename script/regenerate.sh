@@ -23,6 +23,8 @@ cp "$DATA_SRC/device_semantics.json" "$ROOT/data/"
 cp "$DATA_SRC"/profiles/*.json.gz "$ROOT/data/profiles/"
 cp "$DATA_SRC/profiles/_receiver_type_aliases.json" "$ROOT/data/profiles/"
 cp "$DATA_SRC"/translation_custom/*.json "$ROOT/data/translation_custom/"
+# Device images keep their subdirectories (device_icons references coupling/<name>.png).
+cp -R "$DATA_SRC/device_images" "$ROOT/data/"
 
 VERSION="$(sed -n 's/^VERSION: Final = "\(.*\)"$/\1/p' "$SRC/openccu_data/const.py")"
 [ -n "$VERSION" ] || { echo "could not read VERSION from const.py" >&2; exit 1; }

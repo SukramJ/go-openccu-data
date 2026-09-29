@@ -4,7 +4,7 @@
 // Package openccudata ships the OCCU/OpenCCU metadata extracts of the
 // openccu-data project as a versioned Go artifact: the raw archives
 // (translations, easymodes, MASTER-paramset profiles, curated
-// overlays) plus thin typed accessors for the curated
+// overlays), the CCU WebUI device images, plus thin typed accessors for the curated
 // device-semantics classifications.
 //
 // The data snapshot under data/ is regenerated on every openccu-data
@@ -27,7 +27,7 @@ import (
 
 // SnapshotVersion is the openccu-data release this data snapshot was
 // generated from. Stamped by script/regenerate.sh.
-const SnapshotVersion = "2026.9.0"
+const SnapshotVersion = "2026.9.1"
 
 // files carries the embedded data snapshot. Exposed through ReadFile
 // so the path layout stays an implementation detail.
@@ -42,8 +42,9 @@ var files embed.FS
 // ReadFile returns one embedded artifact by its snapshot-relative
 // name, e.g. "translation_extract.json.gz",
 // "profiles/SWITCH_VIRTUAL_RECEIVER.json.gz",
-// "translation_custom/device_models_de.json" or
-// "device_semantics.json".
+// "translation_custom/device_models_de.json",
+// "device_semantics.json" or
+// "device_images/250/coupling/hm-coupling-dim.png".
 func ReadFile(name string) ([]byte, error) {
 	return files.ReadFile("data/" + name)
 }

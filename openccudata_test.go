@@ -79,3 +79,25 @@ func TestSnapshotVersionStamped(t *testing.T) {
 		t.Fatal("SnapshotVersion empty")
 	}
 }
+
+// TestSnapshotCarriesDeviceImages pins the device image tree: a plain
+// image, one under coupling/ (referenced by device_icons as
+// "coupling/<name>.png") and an underscore-prefixed one, which the
+// embed only keeps because of the all: prefix. Each must be a PNG.
+func TestSnapshotCarriesDeviceImages(t *testing.T) {
+	pngMagic := []byte("\x89PNG\r\n\x1a\n")
+	for _, name := range []string{
+		"device_images/250/PushButton-2ch-wm.png",
+		"device_images/250/coupling/hm-coupling-dim.png",
+		"device_images/250/coupling/_hm-coupling-onoff.png",
+	} {
+		raw, err := ReadFile(name)
+		if err != nil {
+			t.Errorf("ReadFile(%q): %v", name, err)
+			continue
+		}
+		if !bytes.HasPrefix(raw, pngMagic) {
+			t.Errorf("ReadFile(%q): not a PNG", name)
+		}
+	}
+}
