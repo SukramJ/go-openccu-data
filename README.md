@@ -15,7 +15,7 @@ framework.
 ## Usage
 
 ```go
-import openccudata "github.com/SukramJ/go-openccu-data"
+import openccudata "sukramj.dev/go-openccu-data"
 
 raw, err := openccudata.ReadFile("translation_extract.json.gz")
 models := openccudata.DoorbellModels() // curated device semantics
